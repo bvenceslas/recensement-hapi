@@ -1,6 +1,7 @@
-const Hapi = require("hapi");
+const Hapi = require("@hapi/hapi");
 require("dotenv").config();
 const Person = require("./model/person.model");
+const Joi = require("joi");
 // const Joi = require("joi");
 
 // initialize server
@@ -13,13 +14,13 @@ const init = async () => {
 
   // routes
 
-  server.route({
-    method: "GET",
-    path: "/",
-    handler: (request, h) => {
-      return "Hello World!";
-    },
-  });
+  //   server.route({
+  //     method: "GET",
+  //     path: "/{any*}",
+  //     handler: (request, h) => {
+  //       return "You might be lost !!!";
+  //     },
+  //   });
 
   // get all the persons
   server.route({
@@ -30,7 +31,7 @@ const init = async () => {
         const people = await Person.find().exec();
         const response = h.response(people);
         response.code = 200;
-        response.header("Content-Type", "text/plain");
+        response.header("Content-Type", "text/json");
         return response;
       } catch (err) {
         return h.response(err).code(500);
@@ -41,19 +42,10 @@ const init = async () => {
   server.route({
     method: "POST",
     path: "/persons",
-    options: {
-      // was done using `config`
-      payload: {
-        allow: ["Application/json"],
-      },
-      validate: {
-        // add validation here
-      },
-    },
     handler: async (request, h) => {
       try {
-        console.log("request", request);
-        const newPerson = new Person(request.payload);
+        const payload = request.payload;
+        const newPerson = new Person(payload);
         const result = await newPerson.save();
         return h.response(result);
       } catch (err) {
@@ -65,7 +57,7 @@ const init = async () => {
   //get one person by his id
   server.route({
     method: "GET",
-    path: "/person/:id",
+    path: "/persons/{id}",
     handler: async (request, h) => {
       try {
         const userId = request.params.id;
@@ -87,7 +79,7 @@ const init = async () => {
   // edit person's data
   server.route({
     method: "PUT",
-    path: "/person/{id}",
+    path: "/persons/{id}",
     handler: async (request, h) => {
       try {
         const person = await Person.findByIdAndUpdate(

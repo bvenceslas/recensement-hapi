@@ -17,10 +17,11 @@
   },
   "homepage": "https://github.com/bvenceslas/HapiApp#readme",
   "dependencies": {
+    "@hapi/hapi": "^21.3.12",
     "dotenv": "^8.2.0",
-    "hapi": "^18.1.0",
     "joi": "^17.3.0",
-    "mongoose": "^5.11.8"
+    "mongoose": "^5.11.8",
+    "morgan": "^1.10.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.6"
