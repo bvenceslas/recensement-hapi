@@ -1,81 +1,108 @@
-const Hapi = require('hapi');
-require('./db/dbConnect');
-const Person = require('./model/person.model');
-require('dotenv').config();
-const joi = require('joi');
+const Hapi = require("@hapi/hapi");
+require("dotenv").config();
+const Person = require("./model/person.model");
+const Joi = require("joi");
+// const Joi = require("joi");
 
-// initialise server
-const server = new Hapi.Server({
-    port: 8000 || process.env. PORT,
-    host: 'localhost' || process.env.HOST
-});
+// initialize server
 
-server.route({
-    method:'POST',
-    path:'/persons',
-    handler: async(request, h) => {        
-        try{
-            const pers = new Person(request.payload);
-            const result = await pers.save();
-            return h.response(result);
-        }catch(err){
-            return h.response(err).code(500);
-        }
-    }
-});
+const init = async () => {
+  const server = Hapi.Server({
+    host: "localhost",
+    port: process.env.PORT || 6789,
+  });
 
-// get all the persons
-server.route({
-    method:'GET',
-    path:'/persons',
-    handler: async(request, h) => {
-        try{
-            const persons = await Person.find().exec();
-            return h.response(persons);
-        }catch(err){
-            return h.response(err).code(500);
-        }
-    }
-});
+  // routes
 
-//get one person by his id
-server.route({
-    method:'GET',
-    path:'/person/{id}',
+  // get all the persons
+  server.route({
+    method: "GET",
+    path: "/persons",
     handler: async (request, h) => {
-        try{
-            const person = await Person.findById(request.params.id).exec();
-            return h.response(person);
-        }catch(err){
-            return h.response(err).code(500);
-        }
-    }
+      try {
+        const people = await Person.find().exec();
+        const response = h.response(people);
+        response.code = 200;
+        response.header("Content-Type", "text/json");
+        return response;
+      } catch (err) {
+        return h.response(err).code(500);
+      }
+    },
+  });
 
-})
-
-// edit person's data
-server.route({
-    method:'PUT',
-    path:'/person/{id}',
+  server.route({
+    method: "POST",
+    path: "/persons",
     handler: async (request, h) => {
-        try{
-            const person = await Person.findByIdAndUpdate(request.params.id, request.payload, {new: true});
-            return h.response(person);
-        }catch(err){
-            return h.response(err).code(500);
-        }
-    }
-});
-
-server.route({
-    method:'DELETE',
-    path:'/person/{id}',
-    handler: async (request, h) => {
-        const result = await Person.findByIdAndDelete(request.params.id);
+      try {
+        const payload = request.payload;
+        const newPerson = new Person(payload);
+        const result = await newPerson.save();
         return h.response(result);
-    }
-})
+      } catch (err) {
+        return h.response(err).code(500);
+      }
+    },
+  });
 
-server.start()
-    .then(console.log(`Hapi Server running at ${server.info.uri} ...`))
-    .catch(err => console.log({msg: err}));
+  //get one person by his id
+  server.route({
+    method: "GET",
+    path: "/persons/{id}",
+    handler: async (request, h) => {
+      try {
+        const userId = request.params.id;
+        const person = await Person.findById(userId).exec();
+
+        if (!person) {
+          const response = h.response("person not found");
+          response.code = 404;
+          return response;
+        }
+
+        const response = h.response(person);
+
+        return response;
+      } catch (err) {
+        return h.response(err).code(500);
+      }
+    },
+  });
+
+  // edit person's data
+  server.route({
+    method: "PUT",
+    path: "/persons/{id}",
+    handler: async (request, h) => {
+      try {
+        const person = await Person.findByIdAndUpdate(
+          request.params.id,
+          request.payload,
+          { new: true }
+        );
+        return h.response(person);
+      } catch (err) {
+        return h.response(err).code(500);
+      }
+    },
+  });
+  // start server
+  try {
+    await server.start();
+    console.log(`Hapi server running at ${server.info.uri}`);
+
+    // then connect to mongodb
+    require("./db/dbConnect");
+  } catch (error) {
+    console.error("Hapi server failed to connect");
+  }
+};
+
+// start the server
+init();
+
+process.on("unhandledRejection", (err) => {
+  console.log(err);
+  process.exit(1);
+});

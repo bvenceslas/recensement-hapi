@@ -1,6 +1,7 @@
-# HapiApp
+# recensement-hapi
 
-Backend app with Node js using Hapi as backend server framework
+Node server to register people into a db
+
 ## Getting Started
 
 The project is public
@@ -14,6 +15,8 @@ The project is public
 ## Ressources
 
 [Hapi Tutorial](https://hapi.dev/tutorials/)
+[Hapi Updates](https://medium.com/the-node-js-collection/so-youre-thinking-about-updating-your-hapi-js-server-to-v17-eab637afd1ff)
+
 ## Author
 
 👤 Venceslas Burongu
