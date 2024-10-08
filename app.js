@@ -1,11 +1,9 @@
 const Hapi = require("@hapi/hapi");
 require("dotenv").config();
 const Person = require("./model/person.model");
-const Joi = require("joi");
 // const Joi = require("joi");
 
 // initialize server
-
 const init = async () => {
   const server = Hapi.Server({
     host: "localhost",
@@ -21,12 +19,10 @@ const init = async () => {
     handler: async (request, h) => {
       try {
         const people = await Person.find().exec();
-        const response = h.response(people);
-        response.code = 200;
-        response.header("Content-Type", "text/json");
-        return response;
+        return h.response(people).code(200).type("application/json");
       } catch (err) {
-        return h.response(err).code(500);
+        console.error("Error fetching persons:", err);
+        return h.response({ error: "Internal Server Error" }).code(500);
       }
     },
   });
@@ -36,6 +32,19 @@ const init = async () => {
     path: "/persons",
     handler: async (request, h) => {
       try {
+        const personSchema = Joi.object({
+          firstName: Joi.string().required(),
+          lastName: Joi.string(),
+          phone: Joi.string().min(10).required(),
+          email: Joi.string().email().required(),
+        });
+
+        const { error } = personSchema.validate(request.payload);
+
+        if (error) {
+          return h.response({ error: error.details[0].message }).code(400);
+        }
+
         const payload = request.payload;
         const newPerson = new Person(payload);
         const result = await newPerson.save();
@@ -102,7 +111,7 @@ const init = async () => {
 // start the server
 init();
 
-process.on("unhandledRejection", (err) => {
-  console.log(err);
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
   process.exit(1);
 });
